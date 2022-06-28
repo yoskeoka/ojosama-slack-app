@@ -32,6 +32,7 @@ func main() {
 	socketClient.Debugf("SelfUserID: %v", selfUserId)
 
 	subscriber := SlackEventSubscriber{
+		BotUser:      authTest,
 		WebApi:       webApi,
 		SocketClient: socketClient,
 	}
@@ -39,7 +40,6 @@ func main() {
 	go func() {
 		for event := range socketClient.Events {
 			err := subscriber.HandleSocketModeEvent(event)
-
 			if err != nil {
 				log.Printf("Handle Event error: %v", err)
 			}
@@ -50,6 +50,7 @@ func main() {
 }
 
 type SlackEventSubscriber struct {
+	BotUser      *slack.AuthTestResponse
 	SocketClient *socketmode.Client
 	WebApi       *slack.Client
 }
@@ -65,31 +66,45 @@ func (es *SlackEventSubscriber) HandleSocketModeEvent(envelop socketmode.Event) 
 	case socketmode.EventTypeDisconnect:
 		fmt.Println("Disconnected from Slack with Socket Mode.")
 	case socketmode.EventTypeSlashCommand:
-		es.SocketClient.Ack(*envelop.Request)
+		es.SocketClient.Ack(*envelop.Request,
+			map[string]interface{}{
+				// slash command typed by the user will be visible.
+				"response_type": "in_channel",
+			},
+		)
 
 		cmd, ok := envelop.Data.(slack.SlashCommand)
 		if !ok {
-			return fmt.Errorf("Ignored %+v\n", envelop.Data)
+			return fmt.Errorf("ignored %+v", envelop.Data)
 		}
 
 		convertedMsg, err := ojosama.Convert(cmd.Text, nil)
 		if err != nil {
-			return fmt.Errorf("Ojosama convert error: %v", err)
+			return fmt.Errorf("ojosama convert error: %v", err)
 		}
 
-		_, _, err = es.WebApi.PostMessageContext(context.TODO(),
-			cmd.ChannelID,
-			slack.MsgOptionText(
-				convertedMsg,
-				false,
-			),
-		)
+		userProfile, err := es.SocketClient.GetUserProfile(&slack.GetUserProfileParameters{
+			UserID: cmd.UserID,
+		})
 		if err != nil {
-			return fmt.Errorf("Failed to reply: %v", err)
+			return fmt.Errorf("failed to reply: %v", err)
+		}
+
+		_, _, err = es.SocketClient.PostMessageContext(context.TODO(),
+			cmd.ChannelID,
+			slack.MsgOptionCompose(
+				slack.MsgOptionText(
+					convertedMsg,
+					false,
+				),
+				slack.MsgOptionUsername(fmt.Sprintf("%s (%s)", es.BotUser.User, userProfile.DisplayName)),
+			))
+		if err != nil {
+			return fmt.Errorf("failed to reply: %v", err)
 		}
 
 	default:
-		es.SocketClient.Debugf("Skipped: %+v", envelop)
+		es.SocketClient.Debugf("skipped: %+v", envelop)
 	}
 
 	return nil
