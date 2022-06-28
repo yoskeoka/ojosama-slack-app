@@ -15,7 +15,7 @@ Slack Workspaceごとにサーバーを用意してデプロイが必要な作�
 cp .env.example .env
 ```
 
-Slack Appを作成する場合は、 [app_amnifests.example.yml](./app_amnifests.example.yml) も参考にしてください🗒
+Slack Appを作成する場合は、 [app_manifest.example.yml](./app_manifest.example.yml) も参考にしてください🗒
 
 Slack Appを作成して、Slack App Tokenを発行し、`SLACK_APP_TOKEN=`の値を置き換えて下さい。
 そのときは、Scope `connections:write` を付与することをお忘れないようにお願いします🌱
