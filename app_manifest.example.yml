@@ -1,0 +1,24 @@
+display_information:
+  name: ojosama
+features:
+  bot_user:
+    display_name: ojosama
+    always_online: false
+  slash_commands:
+    - command: /ojosama
+      description: お嬢様が喋りますわ〜〜〜！！！
+      usage_hint: /ojosama 喋らせる内容
+      should_escape: false
+oauth_config:
+  scopes:
+    bot:
+      - chat:write
+      - chat:write.public
+      - commands
+      - users.profile:read
+settings:
+  interactivity:
+    is_enabled: true
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false
