@@ -3,7 +3,7 @@ module ojosama-slack-app
 go 1.17
 
 require (
-	github.com/jiro4989/ojosama v0.6.0
+	github.com/jiro4989/ojosama v0.11.0
 	github.com/slack-go/slack v0.11.2
 )
 
